@@ -1,0 +1,69 @@
+---
+title: "Final Sprint: Analyzing Covid-19 Symptoms and Income Level"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+Names: Emma Benedict, Jacob Hamil, Ian Earley
+
+```{r}
+library(tidyverse)
+library(sf)
+library(tmap)
+library(tidyverse)
+library(dplyr)
+library(knitr)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+```{r}
+files<-list.files("data",recursive = TRUE,full.names = TRUE,pattern="puf")
+
+pulse<-map_df(files,read_csv)
+```
+
+```{r}
+#Filter the Data
+pulse_filter <- pulse%>%select(INCOME, SYMPTOMS, EST_ST, PWEIGHT)%>%
+  filter(EST_ST == "13")%>%
+  filter(INCOME > -88, SYMPTOMS > -88)
+```
+
+```{r}
+pulse_table <- pulse_filter%>%
+  count(SYMPTOMS, INCOME, name = "count") %>%
+  pivot_wider(names_from=SYMPTOMS, values_from=count,values_fill = 0)
+
+chisq.test(pulse_table)
+```
+
+```{r}
+income1 <- pulse_table%>%filter(INCOME == "1")%>%
+  select(-'INCOME')%>%
+  pivot_longer(cols = everything(), names_to = 'Symptoms', values_to = 'Count')
+
+income_georgia <- pulse_table%>%filter(INCOME == "4")%>%
+  select(-'INCOME')%>%
+  pivot_longer(cols = everything(), names_to = 'Symptoms', values_to = 'Count')
+
+income_8 <- pulse_table%>%filter(INCOME == "8")%>%
+  select(-'INCOME')%>%
+  pivot_longer(cols = everything(), names_to = 'Symptoms', values_to = 'Count')
+
+ggplot(income1, aes(x=Symptoms, y=Count)) + 
+  geom_bar(stat = "identity")+
+  ggtitle("Covid Symptoms for Lowest Income Level in Georgia")
+
+ggplot(income_georgia, aes(x=Symptoms, y=Count)) + 
+  geom_bar(stat = "identity") +
+  ggtitle("Covid Symptoms for Median Income Level in Georgia")
+
+ggplot(income_8, aes(x=Symptoms, y=Count)) + 
+  geom_bar(stat = "identity") +
+  ggtitle("Covid Symptoms for Highest Income Level in Georgia")
+```
+
